@@ -1,16 +1,6 @@
-name: PR-Based Notebook CI/CD
+name: Notebook CI/CD to Databricks
 
 on:
-  pull_request:
-    branches:
-      - dev
-      - qa
-      - prod
-      - main
-    paths:
-      - notebooks/hello.ipynb
-
-  # Optional: Still respond to direct pushes if needed
   push:
     branches:
       - dev
@@ -25,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -35,15 +25,15 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      - name: Install dependencies
+      - name: Install required tools
         run: |
           python -m pip install --upgrade pip
           pip install requests databricks-cli
 
-      - name: Determine target folder
+      - name: Determine Databricks folder
         id: target
         run: |
-          case "${{ github.base_ref || github.ref_name }}" in
+          case "${{ github.ref_name }}" in
             dev)   folder="/github-actions-ci-cd-dev" ;;
             qa)    folder="/github-actions-ci-cd-qa" ;;
             prod)  folder="/github-actions-ci-cd-prod" ;;
@@ -55,7 +45,7 @@ jobs:
       - name: Upload notebook to Databricks
         run: |
           folder="${{ steps.target.outputs.folder }}"
-          echo "Uploading notebook to Databricks folder: $folder"
+          echo "Uploading to Databricks folder: $folder"
 
           curl -X POST "${{ secrets.DATABRICKS_HOST }}/api/2.0/workspace/import" \
             -H "Authorization: Bearer ${{ secrets.DATABRICKS_TOKEN }}" \
@@ -64,3 +54,21 @@ jobs:
             -F language=PYTHON \
             -F overwrite=true \
             -F content=@notebooks/hello.ipynb
+
+      - name: Promote to next GitHub branch (if not main)
+        if: ${{ github.ref_name != 'main' }}
+        run: |
+          case "${{ github.ref_name }}" in
+            dev)   next="qa" ;;
+            qa)    next="prod" ;;
+            prod)  next="main" ;;
+            *)     echo "No promotion needed"; exit 0 ;;
+          esac
+
+          echo "Promoting notebooks/hello.ipynb to $next"
+          git fetch origin
+          git checkout $next
+          git checkout ${{ github.ref_name }} -- notebooks/hello.ipynb
+          git add notebooks/hello.ipynb
+          git commit -m "Auto-promoted from ${{ github.ref_name }} to $next"
+          git push origin $next
