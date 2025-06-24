@@ -34,10 +34,10 @@ jobs:
         run: |
           # Map branch to Databricks folder
           case "${{ github.ref_name }}" in
-            dev)   folder="/dev" ;;
-            qa)    folder="/qa" ;;
-            prod)  folder="/prod" ;;
-            main)  folder="/main" ;;
+            dev)   folder="/github-actions-ci-cd-dev" ;;
+            qa)    folder="/github-actions-ci-cd-qa" ;;
+            prod)  folder="/github-actions-ci-cd-prod" ;;
+            main)  folder="/github-actions-ci-cd" ;;
             *)     echo "Unsupported branch"; exit 1 ;;
           esac
 
