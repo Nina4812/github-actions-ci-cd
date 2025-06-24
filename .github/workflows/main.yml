@@ -1,6 +1,16 @@
-name: Unified Notebook CI/CD
+name: PR-Based Notebook CI/CD
 
 on:
+  pull_request:
+    branches:
+      - dev
+      - qa
+      - prod
+      - main
+    paths:
+      - notebooks/hello.ipynb
+
+  # Optional: Still respond to direct pushes if needed
   push:
     branches:
       - dev
@@ -30,18 +40,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests databricks-cli
 
-      - name: Upload notebook to Databricks
+      - name: Determine target folder
+        id: target
         run: |
-          # Map branch to Databricks folder
-          case "${{ github.ref_name }}" in
+          case "${{ github.base_ref || github.ref_name }}" in
             dev)   folder="/github-actions-ci-cd-dev" ;;
             qa)    folder="/github-actions-ci-cd-qa" ;;
             prod)  folder="/github-actions-ci-cd-prod" ;;
             main)  folder="/github-actions-ci-cd" ;;
             *)     echo "Unsupported branch"; exit 1 ;;
           esac
+          echo "folder=$folder" >> $GITHUB_OUTPUT
 
-          echo "Uploading to Databricks folder: $folder"
+      - name: Upload notebook to Databricks
+        run: |
+          folder="${{ steps.target.outputs.folder }}"
+          echo "Uploading notebook to Databricks folder: $folder"
 
           curl -X POST "${{ secrets.DATABRICKS_HOST }}/api/2.0/workspace/import" \
             -H "Authorization: Bearer ${{ secrets.DATABRICKS_TOKEN }}" \
@@ -50,20 +64,3 @@ jobs:
             -F language=PYTHON \
             -F overwrite=true \
             -F content=@notebooks/hello.ipynb
-
-      - name: Promote to next branch (if applicable)
-        if: ${{ github.ref_name != 'main' }}
-        run: |
-          case "${{ github.ref_name }}" in
-            dev)   next="qa" ;;
-            qa)    next="prod" ;;
-            prod)  next="main" ;;
-            *)     echo "No further promotion"; exit 0 ;;
-          esac
-
-          git fetch origin
-          git checkout $next
-          git checkout ${{ github.ref_name }} -- notebooks/hello.ipynb
-          git add notebooks/hello.ipynb
-          git commit -m "Auto-promoted from ${{ github.ref_name }} to $next"
-          git push origin $next
