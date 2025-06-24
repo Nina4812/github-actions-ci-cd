@@ -34,10 +34,10 @@ jobs:
         id: target
         run: |
           case "${{ github.ref_name }}" in
-            dev)   folder="/Workspace/Repos/sunainag4444@gmail.com/github-actions-ci-cd-dev" ;;
-            qa)    folder="/Workspace/Repos/sunainag4444@gmail.com/github-actions-ci-cd-qa" ;;
-            prod)  folder="/Workspace/Repos/sunainag4444@gmail.com/github-actions-ci-cd-prod" ;;
-            main)  folder="/Workspace/Repos/sunainag4444@gmail.com/github-actions-ci-cd" ;;
+            dev)   folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-dev" ;;
+            qa)    folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-qa" ;;
+            prod)  folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-prod" ;;
+            main)  folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd" ;;
             *)     echo "Unsupported branch"; exit 1 ;;
           esac
           echo "folder=$folder" >> $GITHUB_OUTPUT
