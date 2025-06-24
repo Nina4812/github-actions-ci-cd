@@ -1,4 +1,4 @@
-name: Notebook CI/CD to Databricks
+name: Notebook CI/CD to Databricks (Workspace)
 
 on:
   push:
@@ -30,22 +30,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests databricks-cli
 
-      - name: Determine Databricks folder
+      - name: Determine Databricks workspace folder
         id: target
         run: |
           case "${{ github.ref_name }}" in
-            dev)   folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-dev" ;;
-            qa)    folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-qa" ;;
-            prod)  folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd-prod" ;;
-            main)  folder="/Repos/sunainag4444@gmail.com/github-actions-ci-cd" ;;
+            dev)   folder="/github-actions-ci-cd-dev" ;;
+            qa)    folder="/github-actions-ci-cd-qa" ;;
+            prod)  folder="/github-actions-ci-cd-prod" ;;
+            main)  folder="/github-actions-ci-cd" ;;
             *)     echo "Unsupported branch"; exit 1 ;;
           esac
           echo "folder=$folder" >> $GITHUB_OUTPUT
 
-      - name: Upload notebook to Databricks
+      - name: Upload notebook to Databricks Workspace
         run: |
           folder="${{ steps.target.outputs.folder }}"
-          echo "Uploading to Databricks folder: $folder"
+          echo "Uploading to Databricks workspace folder: $folder"
 
           curl -X POST "${{ secrets.DATABRICKS_HOST }}/api/2.0/workspace/import" \
             -H "Authorization: Bearer ${{ secrets.DATABRICKS_TOKEN }}" \
